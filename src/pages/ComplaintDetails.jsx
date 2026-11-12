@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, CheckCircle2, Paperclip, UserCog } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Loader2, MessageSquare, Paperclip, Send, UserCog } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PriorityBadge, StatusBadge } from '../components/Badges.jsx'
 import CategoryIcon from '../components/CategoryIcon.jsx'
@@ -39,6 +39,8 @@ export default function ComplaintDetails() {
   const navigate = useNavigate()
   const [complaint, setComplaint] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -55,6 +57,26 @@ export default function ComplaintDetails() {
   useEffect(() => {
     load()
   }, [load])
+
+  const sendComment = async (event) => {
+    event.preventDefault()
+    const text = message.trim()
+    if (text.length < 2) {
+      notify('Write a short message before sending.', 'error')
+      return
+    }
+    setSending(true)
+    try {
+      const comment = await complaintsApi.addComment(ticketId, text)
+      setComplaint((prev) => ({ ...prev, comments: [...(prev.comments || []), comment] }))
+      setMessage('')
+      notify('Message sent to the IT Cell.')
+    } catch (err) {
+      notify(errorMessage(err, 'Could not send your message.'), 'error')
+    } finally {
+      setSending(false)
+    }
+  }
 
   if (loading) return <DetailsSkeleton />
   if (!complaint) return null
@@ -114,6 +136,52 @@ export default function ComplaintDetails() {
             </ol>
           </section>
 
+          <section className="card">
+            <h2 className="card__step">
+              <MessageSquare size={16} /> Communication
+            </h2>
+
+            {complaint.comments?.length ? (
+              <ul className="comment-list">
+                {complaint.comments.map((comment) => (
+                  <li
+                    key={comment.id}
+                    className={
+                      'comment' + (comment.author_role === 'admin' ? ' comment--admin' : '')
+                    }
+                  >
+                    <div className="comment__head">
+                      <strong>{comment.author_name}</strong>
+                      <span className="comment__role">
+                        {comment.author_role === 'admin' ? 'IT Cell' : 'Employee'}
+                      </span>
+                      <small>{formatDateTime(comment.created_at)}</small>
+                    </div>
+                    <p>{comment.message}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted comment-empty">
+                No messages yet. Add a note below if you have more information for the IT Cell.
+              </p>
+            )}
+
+            <form className="comment-form" onSubmit={sendComment}>
+              <textarea
+                rows={3}
+                value={message}
+                maxLength={1000}
+                placeholder="Add an update or ask the IT Cell a question..."
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit" className="btn btn--primary" disabled={sending}>
+                {sending ? <Loader2 size={17} className="spin" /> : <Send size={17} />}
+                {sending ? 'Sending...' : 'Send message'}
+              </button>
+            </form>
+          </section>
+
           {complaint.status === 'Resolved' && complaint.resolution_remarks && (
             <section className="card card--resolved">
               <h2 className="card__step">
@@ -140,10 +208,22 @@ export default function ComplaintDetails() {
                   {complaint.category}
                 </dd>
               </div>
+              {complaint.subcategory && (
+                <div>
+                  <dt>Subcategory</dt>
+                  <dd>{complaint.subcategory}</dd>
+                </div>
+              )}
               <div>
                 <dt>Priority</dt>
                 <dd>{complaint.priority}</dd>
               </div>
+              {complaint.office_location && (
+                <div>
+                  <dt>Office</dt>
+                  <dd>{complaint.office_location}</dd>
+                </div>
+              )}
               <div>
                 <dt>Status</dt>
                 <dd>{complaint.status}</dd>

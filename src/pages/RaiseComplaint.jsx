@@ -15,11 +15,27 @@ const CATEGORIES = [
 ]
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 
+const SUBCATEGORIES = {
+  Hardware: ['Desktop / PC', 'Monitor', 'UPS / Power', 'Keyboard / Mouse', 'Other hardware'],
+  Software: [
+    'Billing application',
+    'Operating system',
+    'Licence / activation',
+    'MS Office',
+    'Other software',
+  ],
+  Network: ['LAN / cable', 'Wi-Fi', 'VPN', 'Internet speed', 'Other network'],
+  Printer: ['Paper jam', 'Toner / cartridge', 'Scanner', 'Print quality', 'Other printer'],
+  Other: ['Email ID', 'Access / permission', 'New request', 'Other'],
+}
+
 const EMPTY_FORM = {
   subject: '',
   description: '',
   category: 'Hardware',
+  subcategory: '',
   priority: 'Medium',
+  office_location: '',
   asset_tag: '',
   contact_extension: '',
 }
@@ -40,7 +56,11 @@ export default function RaiseComplaint() {
   const [created, setCreated] = useState(null)
 
   const setField = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
+    setForm((prev) =>
+      key === 'category'
+        ? { ...prev, category: value, subcategory: '' }
+        : { ...prev, [key]: value },
+    )
     setErrors((prev) => ({ ...prev, [key]: undefined }))
   }
 
@@ -67,7 +87,9 @@ export default function RaiseComplaint() {
         subject: form.subject.trim(),
         description: form.description.trim(),
         category: form.category,
+        subcategory: form.subcategory || null,
         priority: form.priority,
+        office_location: form.office_location.trim() || null,
         asset_tag: form.asset_tag.trim() || null,
         contact_extension: form.contact_extension.trim() || null,
         attachment_name: attachment?.name || null,
@@ -104,7 +126,10 @@ export default function RaiseComplaint() {
             </div>
             <div>
               <dt>Category</dt>
-              <dd>{created.category}</dd>
+              <dd>
+                {created.category}
+                {created.subcategory ? ` / ${created.subcategory}` : ''}
+              </dd>
             </div>
             <div>
               <dt>Priority</dt>
@@ -171,6 +196,21 @@ export default function RaiseComplaint() {
               })}
             </div>
             {errors.category && <p className="form-error">{errors.category}</p>}
+
+            <label className="field field--subcategory">
+              <span>Subcategory (optional)</span>
+              <select
+                value={form.subcategory}
+                onChange={(e) => setField('subcategory', e.target.value)}
+              >
+                <option value="">Select a more specific issue</option>
+                {(SUBCATEGORIES[form.category] || []).map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
           </section>
 
           <section className="card">
@@ -199,6 +239,18 @@ export default function RaiseComplaint() {
               />
               <small className="counter">{form.description.length}/1500</small>
               {errors.description && <p className="form-error">{errors.description}</p>}
+            </label>
+
+            <label className="field">
+              <span>Office location</span>
+              <input
+                type="text"
+                value={form.office_location}
+                maxLength={120}
+                placeholder={employee?.office_location || 'Head Office, Patna'}
+                onChange={(e) => setField('office_location', e.target.value)}
+              />
+              <small className="hint">Leave blank to use your registered office.</small>
             </label>
 
             <div className="field-row">

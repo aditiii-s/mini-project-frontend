@@ -1,22 +1,41 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
+  Bell,
+  BookOpen,
   ClipboardList,
   FilePlus2,
   LayoutDashboard,
   LogOut,
+  PackagePlus,
   PanelLeft,
   PanelLeftClose,
   ShieldCheck,
+  UserRound,
   Zap,
 } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useNotifications } from '../context/NotificationContext.jsx'
 import { initials } from '../services/format.js'
 
-const NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { to: '/raise-complaint', label: 'Raise Complaint', Icon: FilePlus2 },
-  { to: '/my-complaints', label: 'My Complaints', Icon: ClipboardList },
+const NAV_GROUPS = [
+  {
+    title: 'Employee Services',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+      { to: '/raise-complaint', label: 'Raise Complaint', Icon: FilePlus2 },
+      { to: '/my-complaints', label: 'My Complaints', Icon: ClipboardList },
+      { to: '/service-requests', label: 'IT Service Requests', Icon: PackagePlus },
+      { to: '/knowledge-base', label: 'Knowledge Base', Icon: BookOpen },
+    ],
+  },
+  {
+    title: 'Account',
+    items: [
+      { to: '/notifications', label: 'Notifications', Icon: Bell, badge: 'unread' },
+      { to: '/profile', label: 'My Profile', Icon: UserRound },
+    ],
+  },
 ]
 
 const COLLAPSE_KEY = 'bsphcl_sidebar_collapsed'
@@ -24,6 +43,7 @@ const MOBILE_BREAKPOINT = 860
 
 export default function AppLayout() {
   const { employee, logout } = useAuth()
+  const { unread } = useNotifications()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -80,18 +100,28 @@ export default function AppLayout() {
         </div>
 
         <nav className="sidebar__nav">
-          <p className="sidebar__section">Employee Services</p>
-          {NAV_ITEMS.map(({ to, label, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              title={collapsed ? label : undefined}
-              className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <Icon size={18} />
-              <span className="nav-item__label">{label}</span>
-            </NavLink>
+          {NAV_GROUPS.map((group) => (
+            <div className="sidebar__group" key={group.title}>
+              <p className="sidebar__section">{group.title}</p>
+              {group.items.map(({ to, label, Icon, badge }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  title={collapsed ? label : undefined}
+                  className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="nav-item__icon">
+                    <Icon size={18} />
+                    {badge === 'unread' && unread > 0 && <span className="nav-dot" />}
+                  </span>
+                  <span className="nav-item__label">{label}</span>
+                  {badge === 'unread' && unread > 0 && (
+                    <span className="nav-count">{unread > 9 ? '9+' : unread}</span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 
@@ -147,6 +177,16 @@ export default function AppLayout() {
           </div>
           <div className="topbar__actions">
             <span className="chip">Employee Portal</span>
+            <button
+              type="button"
+              className="icon-button bell"
+              aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+              title="Notifications"
+              onClick={() => navigate('/notifications')}
+            >
+              <Bell size={19} />
+              {unread > 0 && <span className="bell__badge">{unread > 9 ? '9+' : unread}</span>}
+            </button>
             {location.pathname !== '/raise-complaint' && (
               <button
                 type="button"

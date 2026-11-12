@@ -1,22 +1,54 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowRight,
+  BookOpen,
   CheckCircle2,
   CircleDashed,
+  ClipboardList,
   Clock,
+  FilePlus2,
   Inbox,
   Loader2,
+  Megaphone,
+  PackagePlus,
   Search,
+  Timer,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import ComplaintTable from '../components/ComplaintTable.jsx'
-import { StatCardSkeleton } from '../components/Skeleton.jsx'
+import Skeleton, { StatCardSkeleton } from '../components/Skeleton.jsx'
+import { formatDateTime } from '../services/format.js'
 import { CATEGORY_ICONS } from '../components/CategoryIcon.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
-import { complaintsApi, dashboardApi, errorMessage } from '../services/api.js'
+import {
+  announcementsApi,
+  complaintsApi,
+  dashboardApi,
+  errorMessage,
+} from '../services/api.js'
 
 const CATEGORIES = ['Hardware', 'Software', 'Network', 'Printer', 'Other']
+
+const QUICK_ACTIONS = [
+  { to: '/raise-complaint', label: 'Raise Complaint', Icon: FilePlus2 },
+  { to: '/my-complaints', label: 'All Complaints', Icon: ClipboardList },
+  { to: '/knowledge-base', label: 'Help Center', Icon: BookOpen },
+  { to: '/service-requests', label: 'Service Requests', Icon: PackagePlus },
+]
+
+const ANNOUNCEMENT_TONE = {
+  Maintenance: 'announcement--maintenance',
+  Outage: 'announcement--outage',
+  Update: 'announcement--update',
+  Notice: 'announcement--notice',
+}
+
+function formatHours(hours) {
+  if (hours === null || hours === undefined) return 'No data yet'
+  if (hours < 24) return hours + ' h'
+  return (hours / 24).toFixed(1) + ' days'
+}
 
 const STAT_CARDS = [
   { key: 'total', label: 'My complaints', hint: 'All time', Icon: Inbox, tone: 'blue' },
@@ -32,6 +64,8 @@ export default function Dashboard() {
 
   const [stats, setStats] = useState(null)
   const [recent, setRecent] = useState([])
+  const [activity, setActivity] = useState([])
+  const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
   const [trackId, setTrackId] = useState('')
   const [tracking, setTracking] = useState(false)
@@ -39,12 +73,16 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [statsData, recentData] = await Promise.all([
+      const [statsData, recentData, activityData, announcementData] = await Promise.all([
         dashboardApi.stats(),
         dashboardApi.recentComplaints(4),
+        dashboardApi.activity(5),
+        announcementsApi.list(3),
       ])
       setStats(statsData)
       setRecent(recentData)
+      setActivity(activityData)
+      setAnnouncements(announcementData)
     } catch (err) {
       notify(errorMessage(err, 'Could not load your dashboard.'), 'error')
     } finally {
@@ -88,6 +126,17 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <div className="quick-actions">
+        {QUICK_ACTIONS.map(({ to, label, Icon }) => (
+          <Link className="quick-action" to={to} key={to}>
+            <span className="quick-action__icon">
+              <Icon size={17} />
+            </span>
+            {label}
+          </Link>
+        ))}
+      </div>
+
       <div className="stat-grid">
         {loading || !stats
           ? STAT_CARDS.map(({ key }) => <StatCardSkeleton key={key} />)
@@ -104,6 +153,23 @@ export default function Dashboard() {
               </article>
             ))}
       </div>
+
+      <section className="card resolution-card">
+        <span className="resolution-card__icon">
+          <Timer size={19} />
+        </span>
+        <div className="resolution-card__value">
+          <small>Average resolution time</small>
+          {loading || !stats ? (
+            <Skeleton width={90} height={22} radius={6} />
+          ) : (
+            <strong>{formatHours(stats.avg_resolution_hours)}</strong>
+          )}
+        </div>
+        <p className="muted">
+          Measured across your resolved complaints, from the time you filed them.
+        </p>
+      </section>
 
       <div className="dashboard-grid">
         <section className="card card--navy track-card">
@@ -157,6 +223,84 @@ export default function Dashboard() {
             loading={loading}
             emptyText="You have not raised any complaint yet."
           />
+        </section>
+      </div>
+
+      <div className="dashboard-grid dashboard-grid--lower">
+        <section className="card">
+          <header className="card__header">
+            <h2>
+              <Megaphone size={17} /> IT announcements
+            </h2>
+          </header>
+          {loading ? (
+            <div className="announcement-list">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div className="announcement" key={i} aria-busy="true">
+                  <Skeleton width="54%" height={14} />
+                  <Skeleton width="92%" height={12} className="skeleton--gap-sm" />
+                </div>
+              ))}
+            </div>
+          ) : announcements.length === 0 ? (
+            <div className="empty-state">No announcements at the moment.</div>
+          ) : (
+            <div className="announcement-list">
+              {announcements.map((item) => (
+                <article
+                  className={'announcement ' + (ANNOUNCEMENT_TONE[item.kind] || '')}
+                  key={item.id}
+                >
+                  <div className="announcement__head">
+                    <strong>{item.title}</strong>
+                    <span className="announcement__kind">{item.kind}</span>
+                  </div>
+                  <p>{item.body}</p>
+                  <small>{formatDateTime(item.created_at)}</small>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="card">
+          <header className="card__header">
+            <h2>Recent activity</h2>
+          </header>
+          {loading ? (
+            <div className="activity-list">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div className="activity-row" key={i} aria-busy="true">
+                  <Skeleton width={10} height={10} radius={999} />
+                  <div className="activity-row__text">
+                    <Skeleton width="60%" height={13} />
+                    <Skeleton width="36%" height={11} className="skeleton--gap-sm" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : activity.length === 0 ? (
+            <div className="empty-state">Nothing has happened on your tickets yet.</div>
+          ) : (
+            <div className="activity-list">
+              {activity.map((item, index) => (
+                <div className="activity-row" key={item.ticket_id + '-' + index}>
+                  <span className="activity-row__dot" />
+                  <div className="activity-row__text">
+                    <strong>
+                      <Link className="ticket-link" to={'/complaints/' + item.ticket_id}>
+                        {item.ticket_id}
+                      </Link>{' '}
+                      {item.previous_status ? 'moved to ' + item.new_status : 'was submitted'}
+                    </strong>
+                    <small>
+                      {item.updated_by} &middot; {formatDateTime(item.created_at)}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>

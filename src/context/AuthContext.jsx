@@ -45,6 +45,13 @@ export function AuthProvider({ children }) {
     return data.employee
   }, [])
 
+  const refreshEmployee = useCallback(async () => {
+    const data = await authApi.me()
+    setEmployee(data)
+    localStorage.setItem(EMPLOYEE_KEY, JSON.stringify(data))
+    return data
+  }, [])
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(EMPLOYEE_KEY)
@@ -52,8 +59,15 @@ export function AuthProvider({ children }) {
   }, [])
 
   const value = useMemo(
-    () => ({ employee, loading, login, logout, isAuthenticated: Boolean(employee) }),
-    [employee, loading, login, logout],
+    () => ({
+      employee,
+      loading,
+      login,
+      logout,
+      refreshEmployee,
+      isAuthenticated: Boolean(employee),
+    }),
+    [employee, loading, login, logout, refreshEmployee],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
