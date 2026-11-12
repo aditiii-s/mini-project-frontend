@@ -96,17 +96,20 @@ export default function AppLayout() {
         </nav>
 
         <div className="sidebar__user">
-          <div className="user-row">
-            <span className="avatar" title={collapsed ? employee?.full_name : undefined}>
-              {initials(employee?.full_name)}
-            </span>
+          <NavLink
+            to="/profile"
+            className={({ isActive }) => `user-row ${isActive ? 'user-row--active' : ''}`}
+            title={collapsed ? `${employee?.full_name} - view profile` : 'View profile'}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <span className="avatar">{initials(employee?.full_name)}</span>
             <span className="user-meta">
               <strong>{employee?.full_name}</strong>
               <small>
                 {employee?.employee_id} &middot; {employee?.designation}
               </small>
             </span>
-          </div>
+          </NavLink>
           <button
             type="button"
             className="sign-out"
