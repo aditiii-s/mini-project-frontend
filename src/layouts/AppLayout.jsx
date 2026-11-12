@@ -159,7 +159,8 @@ export default function AppLayout() {
         </main>
 
         <footer className="footer">
-          Demo environment with fictional data &middot; For IT support call Ext. 1100 (sample)
+          &copy; {new Date().getFullYear()} Bihar State Power (Holding) Company Ltd. &mdash; IT
+          Cell. All rights reserved.
         </footer>
       </div>
     </div>
