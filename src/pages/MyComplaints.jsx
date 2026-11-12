@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FilePlus2, Search } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import ComplaintTable from '../components/ComplaintTable.jsx'
-import Loader from '../components/Loader.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { complaintsApi, errorMessage } from '../services/api.js'
 
@@ -90,21 +89,17 @@ export default function MyComplaints() {
           </select>
         </div>
 
-        {loading ? (
-          <Loader label="Loading complaints..." />
-        ) : (
-          <>
-            <ComplaintTable
-              complaints={complaints}
-              showChevron
-              emptyText="No complaint matches these filters."
-            />
-            {complaints.length > 0 && (
-              <p className="table-footnote">
-                Showing {complaints.length} of {complaints.length} complaints
-              </p>
-            )}
-          </>
+        <ComplaintTable
+          complaints={complaints}
+          showChevron
+          loading={loading}
+          skeletonRows={5}
+          emptyText="No complaint matches these filters."
+        />
+        {!loading && complaints.length > 0 && (
+          <p className="table-footnote">
+            Showing {complaints.length} of {complaints.length} complaints
+          </p>
         )}
       </section>
     </div>

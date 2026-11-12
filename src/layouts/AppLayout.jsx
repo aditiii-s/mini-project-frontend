@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ClipboardList,
   FilePlus2,
   LayoutDashboard,
   LogOut,
   PanelLeft,
+  PanelLeftClose,
   ShieldCheck,
   Zap,
 } from 'lucide-react'
@@ -18,24 +19,60 @@ const NAV_ITEMS = [
   { to: '/my-complaints', label: 'My Complaints', Icon: ClipboardList },
 ]
 
+const COLLAPSE_KEY = 'bsphcl_sidebar_collapsed'
+const MOBILE_BREAKPOINT = 860
+
 export default function AppLayout() {
   const { employee, logout } = useAuth()
   const navigate = useNavigate()
+
+  // Drawer on phones, narrow icon rail on desktop.
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_KEY) === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_KEY, String(collapsed))
+    } catch {
+      /* private browsing - the preference just will not persist */
+    }
+  }, [collapsed])
+
+  const toggleSidebar = useCallback(() => {
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      setSidebarOpen((open) => !open)
+    } else {
+      setCollapsed((value) => !value)
+    }
+  }, [])
 
   const handleSignOut = () => {
     logout()
     navigate('/login', { replace: true })
   }
 
+  const shellClass = [
+    'app-shell',
+    sidebarOpen ? 'app-shell--open' : '',
+    collapsed ? 'app-shell--collapsed' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className={`app-shell ${sidebarOpen ? 'app-shell--open' : ''}`}>
+    <div className={shellClass}>
       <aside className="sidebar">
         <div className="sidebar__brand">
           <span className="brand-mark">
             <Zap size={20} />
           </span>
-          <span>
+          <span className="sidebar__brand-text">
             <strong>BSPHCL</strong>
             <small>IT Helpdesk Management</small>
           </span>
@@ -47,18 +84,21 @@ export default function AppLayout() {
             <NavLink
               key={to}
               to={to}
+              title={collapsed ? label : undefined}
               className={({ isActive }) => `nav-item ${isActive ? 'nav-item--active' : ''}`}
               onClick={() => setSidebarOpen(false)}
             >
               <Icon size={18} />
-              {label}
+              <span className="nav-item__label">{label}</span>
             </NavLink>
           ))}
         </nav>
 
         <div className="sidebar__user">
           <div className="user-row">
-            <span className="avatar">{initials(employee?.full_name)}</span>
+            <span className="avatar" title={collapsed ? employee?.full_name : undefined}>
+              {initials(employee?.full_name)}
+            </span>
             <span className="user-meta">
               <strong>{employee?.full_name}</strong>
               <small>
@@ -66,9 +106,14 @@ export default function AppLayout() {
               </small>
             </span>
           </div>
-          <button type="button" className="sign-out" onClick={handleSignOut}>
+          <button
+            type="button"
+            className="sign-out"
+            onClick={handleSignOut}
+            title={collapsed ? 'Sign out' : undefined}
+          >
             <LogOut size={17} />
-            Sign out
+            <span className="nav-item__label">Sign out</span>
           </button>
         </div>
       </aside>
@@ -85,10 +130,12 @@ export default function AppLayout() {
           <button
             type="button"
             className="icon-button"
-            aria-label="Toggle sidebar"
-            onClick={() => setSidebarOpen((v) => !v)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={toggleSidebar}
           >
-            <PanelLeft size={19} />
+            {collapsed ? <PanelLeft size={19} /> : <PanelLeftClose size={19} />}
           </button>
           <div className="topbar__title">
             <ShieldCheck size={18} />
@@ -96,7 +143,11 @@ export default function AppLayout() {
           </div>
           <div className="topbar__actions">
             <span className="chip">Employee Portal</span>
-            <button type="button" className="btn btn--primary" onClick={() => navigate('/raise-complaint')}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => navigate('/raise-complaint')}
+            >
               <FilePlus2 size={17} />
               New complaint
             </button>

@@ -3,7 +3,7 @@ import { ArrowLeft, CheckCircle2, Paperclip, UserCog } from 'lucide-react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PriorityBadge, StatusBadge } from '../components/Badges.jsx'
 import CategoryIcon from '../components/CategoryIcon.jsx'
-import Loader from '../components/Loader.jsx'
+import { DetailsSkeleton } from '../components/Skeleton.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { complaintsApi, errorMessage } from '../services/api.js'
 import { formatDateTime } from '../services/format.js'
@@ -56,7 +56,7 @@ export default function ComplaintDetails() {
     load()
   }, [load])
 
-  if (loading) return <Loader label="Loading complaint..." />
+  if (loading) return <DetailsSkeleton />
   if (!complaint) return null
 
   const timeline = buildTimeline(complaint)

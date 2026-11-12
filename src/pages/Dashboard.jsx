@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import ComplaintTable from '../components/ComplaintTable.jsx'
-import Loader from '../components/Loader.jsx'
+import { StatCardSkeleton } from '../components/Skeleton.jsx'
 import { CATEGORY_ICONS } from '../components/CategoryIcon.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
@@ -94,18 +94,20 @@ export default function Dashboard() {
       </div>
 
       <div className="stat-grid">
-        {STAT_CARDS.map(({ key, label, hint, Icon, tone }) => (
-          <article className="card stat-card" key={key}>
-            <header>
-              <span>{label}</span>
-              <span className={`stat-icon stat-icon--${tone}`}>
-                <Icon size={18} />
-              </span>
-            </header>
-            <strong>{loading || !stats ? '--' : stats[key]}</strong>
-            <small>{hint}</small>
-          </article>
-        ))}
+        {loading || !stats
+          ? STAT_CARDS.map(({ key }) => <StatCardSkeleton key={key} />)
+          : STAT_CARDS.map(({ key, label, hint, Icon, tone }) => (
+              <article className="card stat-card" key={key}>
+                <header>
+                  <span>{label}</span>
+                  <span className={`stat-icon stat-icon--${tone}`}>
+                    <Icon size={18} />
+                  </span>
+                </header>
+                <strong>{stats[key]}</strong>
+                <small>{hint}</small>
+              </article>
+            ))}
       </div>
 
       <div className="dashboard-grid">
@@ -155,14 +157,11 @@ export default function Dashboard() {
               View all <ArrowRight size={15} />
             </Link>
           </header>
-          {loading ? (
-            <Loader label="Loading complaints..." />
-          ) : (
-            <ComplaintTable
-              complaints={recent}
-              emptyText="You have not raised any complaint yet."
-            />
-          )}
+          <ComplaintTable
+            complaints={recent}
+            loading={loading}
+            emptyText="You have not raised any complaint yet."
+          />
         </section>
       </div>
     </div>

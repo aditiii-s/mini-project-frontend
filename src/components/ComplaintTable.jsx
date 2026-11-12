@@ -3,8 +3,19 @@ import { Link } from 'react-router-dom'
 import { formatDate } from '../services/format.js'
 import { PriorityBadge, StatusBadge } from './Badges.jsx'
 import CategoryIcon from './CategoryIcon.jsx'
+import { TableSkeleton } from './Skeleton.jsx'
 
-export default function ComplaintTable({ complaints, showChevron = false, emptyText }) {
+export default function ComplaintTable({
+  complaints,
+  showChevron = false,
+  emptyText,
+  loading = false,
+  skeletonRows = 4,
+}) {
+  if (loading) {
+    return <TableSkeleton rows={skeletonRows} showChevron={showChevron} />
+  }
+
   if (!complaints.length) {
     return <div className="empty-state">{emptyText || 'No complaints to show yet.'}</div>
   }
