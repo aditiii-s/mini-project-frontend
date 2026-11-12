@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { initials } from '../services/format.js'
 
@@ -25,6 +25,7 @@ const MOBILE_BREAKPOINT = 860
 export default function AppLayout() {
   const { employee, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
 
   // Drawer on phones, narrow icon rail on desktop.
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -143,14 +144,16 @@ export default function AppLayout() {
           </div>
           <div className="topbar__actions">
             <span className="chip">Employee Portal</span>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => navigate('/raise-complaint')}
-            >
-              <FilePlus2 size={17} />
-              New complaint
-            </button>
+            {location.pathname !== '/raise-complaint' && (
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => navigate('/raise-complaint')}
+              >
+                <FilePlus2 size={17} />
+                New complaint
+              </button>
+            )}
           </div>
         </header>
 

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FilePlus2, Search } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import ComplaintTable from '../components/ComplaintTable.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { complaintsApi, errorMessage } from '../services/api.js'
@@ -52,10 +51,6 @@ export default function MyComplaints() {
           <h1>My complaints</h1>
           <p className="muted">Select a complaint to see its progress and remarks from the IT Cell.</p>
         </div>
-        <Link className="btn btn--primary" to="/raise-complaint">
-          <FilePlus2 size={17} />
-          Raise a complaint
-        </Link>
       </div>
 
       <section className="card">

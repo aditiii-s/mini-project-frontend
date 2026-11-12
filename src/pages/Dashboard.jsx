@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   CircleDashed,
   Clock,
-  FilePlus2,
   Inbox,
   Loader2,
   Search,
@@ -87,10 +86,6 @@ export default function Dashboard() {
             {employee?.designation} &middot; {employee?.department} &middot; {employee?.office_location}
           </p>
         </div>
-        <Link className="btn btn--primary" to="/raise-complaint">
-          <FilePlus2 size={17} />
-          Raise a complaint
-        </Link>
       </div>
 
       <div className="stat-grid">
