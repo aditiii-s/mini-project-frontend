@@ -67,27 +67,36 @@ export default function Dashboard() {
   const [activity, setActivity] = useState([])
   const [announcements, setAnnouncements] = useState([])
   const [loading, setLoading] = useState(true)
+  const [statsError, setStatsError] = useState(false)
   const [trackId, setTrackId] = useState('')
   const [tracking, setTracking] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    try {
-      const [statsData, recentData, activityData, announcementData] = await Promise.all([
-        dashboardApi.stats(),
-        dashboardApi.recentComplaints(4),
-        dashboardApi.activity(5),
-        announcementsApi.list(3),
-      ])
-      setStats(statsData)
-      setRecent(recentData)
-      setActivity(activityData)
-      setAnnouncements(announcementData)
-    } catch (err) {
-      notify(errorMessage(err, 'Could not load your dashboard.'), 'error')
-    } finally {
-      setLoading(false)
+    setStatsError(false)
+
+    // allSettled, not all: a failing widget must not blank the whole dashboard.
+    const [statsRes, recentRes, activityRes, announcementRes] = await Promise.allSettled([
+      dashboardApi.stats(),
+      dashboardApi.recentComplaints(4),
+      dashboardApi.activity(5),
+      announcementsApi.list(3),
+    ])
+
+    if (statsRes.status === 'fulfilled') setStats(statsRes.value)
+    else setStatsError(true)
+    if (recentRes.status === 'fulfilled') setRecent(recentRes.value)
+    if (activityRes.status === 'fulfilled') setActivity(activityRes.value)
+    if (announcementRes.status === 'fulfilled') setAnnouncements(announcementRes.value)
+
+    const failed = [statsRes, recentRes, activityRes, announcementRes].filter(
+      (r) => r.status === 'rejected',
+    )
+    if (failed.length) {
+      notify(errorMessage(failed[0].reason, 'Some dashboard data could not be loaded.'), 'error')
     }
+
+    setLoading(false)
   }, [notify])
 
   useEffect(() => {
@@ -126,6 +135,15 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {statsError && !loading && (
+        <div className="reload-banner">
+          <span>Your complaint figures could not be loaded.</span>
+          <button type="button" className="btn btn--ghost btn--small" onClick={load}>
+            Try again
+          </button>
+        </div>
+      )}
+
       <div className="quick-actions">
         {QUICK_ACTIONS.map(({ to, label, Icon }) => (
           <Link className="quick-action" to={to} key={to}>
@@ -138,7 +156,7 @@ export default function Dashboard() {
       </div>
 
       <div className="stat-grid">
-        {loading || !stats
+        {loading
           ? STAT_CARDS.map(({ key }) => <StatCardSkeleton key={key} />)
           : STAT_CARDS.map(({ key, label, hint, Icon, tone }) => (
               <article className="card stat-card" key={key}>
@@ -148,7 +166,7 @@ export default function Dashboard() {
                     <Icon size={18} />
                   </span>
                 </header>
-                <strong>{stats[key]}</strong>
+                <strong>{stats ? stats[key] : '-'}</strong>
                 <small>{hint}</small>
               </article>
             ))}
@@ -160,10 +178,10 @@ export default function Dashboard() {
         </span>
         <div className="resolution-card__value">
           <small>Average resolution time</small>
-          {loading || !stats ? (
+          {loading ? (
             <Skeleton width={90} height={22} radius={6} />
           ) : (
-            <strong>{formatHours(stats.avg_resolution_hours)}</strong>
+            <strong>{stats ? formatHours(stats.avg_resolution_hours) : '-'}</strong>
           )}
         </div>
         <p className="muted">
