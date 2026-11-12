@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Eye, EyeOff, KeyRound, Loader2, Lock, LogIn, ShieldCheck, User, Zap } from 'lucide-react'
+import { Eye, EyeOff, KeyRound, Loader2, Lock, LogIn, User, Zap } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { errorMessage } from '../services/api.js'
-
-const DEMO_ACCOUNTS = [
-  { role: 'Employee', id: 'EMP1024', password: 'demo123', Icon: User },
-  { role: 'IT Admin', id: 'ITADMIN', password: 'admin123', Icon: ShieldCheck },
-]
 
 export default function Login() {
   const { login, isAuthenticated } = useAuth()
@@ -67,23 +62,7 @@ export default function Login() {
             One place for every office to report hardware, software, network and printer issues
             &mdash; and for the IT Cell to resolve them on time.
           </p>
-          <div className="login__stats">
-            <div>
-              <strong>5</strong>
-              <small>Support categories</small>
-            </div>
-            <div>
-              <strong>24&times;7</strong>
-              <small>Ticket tracking</small>
-            </div>
-            <div>
-              <strong>&lt; 48h</strong>
-              <small>Target resolution</small>
-            </div>
-          </div>
         </div>
-
-        <p className="login__note">Authorised personnel only &middot; Demo environment with fictional data</p>
       </section>
 
       <section className="login__panel">
@@ -136,36 +115,7 @@ export default function Login() {
             {submitting ? <Loader2 size={17} className="spin" /> : <LogIn size={17} />}
             {submitting ? 'Signing in...' : 'Sign in'}
           </button>
-
-          <div className="demo-box">
-            <p>DEMO ACCOUNTS</p>
-            <div className="demo-box__grid">
-              {DEMO_ACCOUNTS.map(({ role, id, password: pwd, Icon }) => (
-                <button
-                  type="button"
-                  key={id}
-                  className="demo-card"
-                  onClick={() => {
-                    setEmployeeId(id)
-                    setPassword(pwd)
-                    setError('')
-                  }}
-                >
-                  <span>
-                    <Icon size={15} /> {role}
-                  </span>
-                  <code>
-                    {id} / {pwd}
-                  </code>
-                </button>
-              ))}
-            </div>
-          </div>
         </form>
-
-        <p className="login__footer">
-          &copy; 2026 IT Cell &middot; Sample portal &mdash; not connected to any real BSPHCL system
-        </p>
       </section>
     </div>
   )
