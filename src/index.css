@@ -1531,11 +1531,18 @@ button {
   justify-content: center;
 }
 
-.app-shell--collapsed .sidebar__brand-text,
-.app-shell--collapsed .sidebar__section,
-.app-shell--collapsed .user-meta,
-.app-shell--collapsed .nav-item__label {
+/* The descendant selectors below are deliberately specific: the base rule
+   `.sidebar__brand span:last-child` would otherwise win and the label would
+   overflow the narrow rail. */
+.app-shell--collapsed .sidebar__brand .sidebar__brand-text,
+.app-shell--collapsed .sidebar .sidebar__section,
+.app-shell--collapsed .user-row .user-meta,
+.app-shell--collapsed .sidebar .nav-item__label {
   display: none;
+}
+
+.app-shell--collapsed .sidebar {
+  overflow-x: hidden;
 }
 
 .app-shell--collapsed .sidebar__nav {
@@ -1611,11 +1618,14 @@ button {
     --sidebar-width: 272px;
   }
 
-  .app-shell--collapsed .sidebar__brand-text,
-  .app-shell--collapsed .sidebar__section,
-  .app-shell--collapsed .user-meta,
-  .app-shell--collapsed .nav-item__label {
-    display: revert;
+  .app-shell--collapsed .sidebar__brand .sidebar__brand-text,
+  .app-shell--collapsed .user-row .user-meta {
+    display: flex;
+  }
+
+  .app-shell--collapsed .sidebar .sidebar__section,
+  .app-shell--collapsed .sidebar .nav-item__label {
+    display: block;
   }
 
   .app-shell--collapsed .sidebar__brand {
